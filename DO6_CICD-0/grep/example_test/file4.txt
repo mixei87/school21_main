@@ -1,0 +1,9 @@
+and
+apple
+Pineapple
+queen
+12
+,the 
+[a-g]owe
+[[:punct:]]s
+[^e]en

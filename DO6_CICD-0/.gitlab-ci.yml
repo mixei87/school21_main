@@ -1,0 +1,82 @@
+variables:
+  CAT: "src/cat"
+  GREP: "src/grep"
+
+stages:
+  - build
+  - cpplint
+  - tests
+  - deploy
+  - telegram
+
+build-job:
+  stage: build
+  tags:
+    - inf_i1
+  script:
+    - make -C $CAT
+    - make -C $GREP
+  after_script:
+    - echo "Build status:"" $CI_JOB_STATUS" > report.log
+    - cat report.log
+  artifacts:
+    paths: 
+      - $CAT/s21_cat
+      - $GREP/s21_grep
+      - report.log
+    expire_in: 1 mos
+
+cpplint-job:
+  stage: cpplint
+  tags:
+    - inf_i1
+  allow_failure: false
+  script:
+    - ./part2.sh
+  after_script:
+    - cat report.log > report1.log
+    - echo "Cpplint status:"" $CI_JOB_STATUS" >> report1.log
+  artifacts:
+    paths: 
+      - report1.log
+
+integration-tests-job:
+  stage: tests
+  tags:
+    - inf_i1
+  allow_failure: false
+  script:
+    - make -C $CAT test
+    - make -C $GREP test
+  after_script:
+    - cat report1.log > report2.log
+    - echo "Tests status:"" $CI_JOB_STATUS" >> report2.log
+  artifacts:
+    paths: 
+      - report2.log
+
+deploy-job:
+  stage: deploy
+  tags:
+    - inf_i1
+  when: manual
+  allow_failure: false
+  script:
+    - ./part5.sh $CAT/s21_cat $GREP/s21_grep
+  after_script:
+    - cat report2.log > report3.log
+    - echo "Deploy status:"" $CI_JOB_STATUS" >> report3.log
+  artifacts:
+    paths: 
+      - report3.log
+
+telegram-job:
+  stage: telegram
+  tags:
+    - inf_i1
+  script:
+    - export CI_PROJECT_NAME
+    - export CI_PROJECT_URL
+    - export CI_PIPELINE_ID
+    - export CI_COMMIT_REF_SLUG
+    - ./part6.sh "$(cat report3.log)"
