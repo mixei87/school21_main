@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>resources/images/calculator.icns</file>
+        <file>resources/images/casio_fx270w_0.jpg</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>resources/fonts/EurostileBold.ttf</file>
+        <file>resources/fonts/EurostileExtended-Roman.ttf</file>
+        <file>resources/fonts/PixeloidMono.ttf</file>
+        <file>resources/fonts/PixeloidSans.ttf</file>
+        <file>resources/fonts/PixeloidSansBold.ttf</file>
+    </qresource>
+</RCC>
