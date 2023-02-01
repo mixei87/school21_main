@@ -1,0 +1,16 @@
+title,parent_task,max_xp
+C2_s21_SimpleBashUtils,,250
+C3_s21_stringplus,C2_s21_SimpleBashUtils,500
+C4_s21_math,C2_s21_SimpleBashUtils,300
+C5_s21_decimal,C3_s21_stringplus,350
+C6_s21_matrix,C5_s21_decimal,200
+C8_s21_3Dviewer_1_0,C6_s21_matrix,750
+A1_s21_maze,C8_s21_3Dviewer_1_0,300
+A2_s21_simpleNavigator,A1_s21_maze,400
+A3_s21_parallels,A2_s21_simpleNavigator,300
+CPP1_s21_matrix,C8_s21_3Dviewer_1_0,300
+CPP2_s21_containers,CPP1_s21_matrix,350
+CPP3_s21_smartcalc_2_0,CPP2_s21_containers,600
+DO1_s21_linux,C8_s21_3Dviewer_1_0,300
+DO2_s21_linuxNetwork,DO1_s21_linux,250
+DO3_s21_linuxMonitoring1_0,DO2_s21_linuxNetwork,350
