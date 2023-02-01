@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  rdexter_nginx:
+    image: rdexter_nginx:1.0
+    build:
+      context: .
+      dockerfile: Dockerfile_part5
+    container_name: rdexter_6
+
+  proxy_nginx:
+    image: proxy_nginx:1.0
+    build:
+      context: .
+      dockerfile: Dockerfile_part6
+    depends_on:
+      - rdexter_nginx
+    ports:
+      - "80:8080"

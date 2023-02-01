@@ -1,0 +1,12 @@
+FROM nginx:latest
+
+WORKDIR /etc/nginx/
+
+COPY nginx/nginx.conf .
+COPY server/ ./server/
+
+RUN apt update; \
+apt upgrade; \
+apt install -y gcc libfcgi-dev spawn-fcgi procps
+
+CMD cd server; bash run.sh

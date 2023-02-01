@@ -1,0 +1,7 @@
+FROM nginx:latest
+
+WORKDIR /etc/nginx/
+
+COPY part6/ .
+
+CMD bash run.sh

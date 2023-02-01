@@ -1,87 +1,72 @@
-OS=$(shell uname -s)
-git_branch=$(shell git branch --show-current 2>/dev/null)
-CC=g++
-CFLAGS=-c -std=c++17 -Wall -Wextra -Werror 
-LDFLAGS=--coverage
-ifeq ($(OS), Darwin)
-	LIBTEST=-lgtest
-else
-	LIBTEST=-lgtest -lgtest_main -lstdc++ -L. -lm -lrt -lpthread
-endif
-SOURCES=s21_additional_functions.cc s21_arithmetic_functions.cc \
-		s21_constructors.cc s21_for_test.cc s21_operators.cc \
-		s21_setters_getters.cc
-TEST=test
-OBJECTS=$(SOURCES:.cc=.o)
-LIB=s21_matrix_oop
-EXE=s21_matrix.out
-R=report
+N1=rdexter_3
+N2=rdexter_4
+N3=nginx_rdexter
+D1=/etc/nginx
+D2=$(D1)/server
+D3=server
+D4=nginx
+DOC1=Dockerfile_part4
+DOC2=Dockerfile_part5
 
-.PHONY: all $(LIB).a git clean cpplint leaks test rebuild install_gtest \
-install_valgrind
+.PHONY: part3 part3_create part3_copy stop_part3 kill_part3 \
+reload_part3 part4_1 part4_2 part4_stop part5 part6 part6_stop
 
-all: test
+part3: part3_create part3_copy
 
-$(LIB).a: $(SOURCES) $(LIB)
+part3_create:
+	docker run --name $(N1) --rm -d -p 81:81 nginx
+	docker exec $(N1) apt update
+	docker exec $(N1) apt install -y gcc libfcgi-dev spawn-fcgi procps
+	docker exec $(N1) mkdir -p $(D2)
+
 	
-$(LIB): $(OBJECTS) 
-	ar r $@.a $^ 
+part3_copy:
+	docker cp $(D4)/nginx.conf $(N1):$(D1)
+	docker cp $(D3)/server.c $(N1):$(D2)
+	docker exec $(N1) gcc $(D2)/server.c -o $(D2)/server.out -lfcgi 
+	docker exec $(N1) spawn-fcgi -p 8080 $(D2)/server.out
+	docker exec $(N1) nginx -s reload
 
-.cc.o:
-	$(CC) $(CFLAGS) $< -o $@
+stop_part3:
+	docker stop $(N1)
 
-test: $(TEST).o $(LIB).a   
-	$(CC) -o $(EXE) $^ $(LIBTEST) 
-	./$(EXE)
+kill_part3:
+	docker exec -it $(N1) bash -c 'kill -- -1'
 
-$(TEST).o:
-	$(CC) $(CFLAGS) $(TEST).cc -o $@
+reload_part3: kill_part3 part3_copy
 
-gcov_report: clean
-	$(CC) $(LDFLAGS) $(SOURCES) $(TEST).cc -o test.out $(LIBTEST)
-	./test.out
-	lcov -t "test" --no-external -o $(R).info -c -d .
-	genhtml -o $(R) $(R).info	
-ifeq ($(OS), Darwin)
-	open -a "Google Chrome" $(R)/index.html
-else
-	google-chrome $(R)/index.html
-endif	
+part4_create_image:
+	cp $(D4)/nginx_without_status.conf $(D4)/nginx.conf
+	docker build -t $(N3):latest -f $(DOC1) .
+	docker images
 
-cpplint:
-	cp ../materials/linters/CPPLINT.cfg .
-	python3 ../materials/linters/cpplint.py --extensions=cc *.cc
-	python3 ../materials/linters/cpplint.py --extensions=h *.h
-	rm -f CPPLINT.cfg
+part4_run:
+	docker run --rm -p80:81 -d -it \
+	-v ${PWD}/nginx/nginx.conf:/etc/nginx/nginx.conf --name $(N2) $(N3)
 
-clean:
-	rm -rf *.dSYM *.out *.o *.a *.gcda *.gcno report.* report/
+part4_stop:
+	docker stop $(N2)
 
-leaks: rebuild
-ifeq ($(OS), Darwin)
-	CK_FORK=no leaks -atExit -- ./$(EXE)
-else	
-	valgrind --leak-check=full --show-leak-kinds=all \
-         --track-origins=yes --verbose ./$(EXE)       
-endif
+part4_copy_status:
+	cp $(D4)/nginx_with_status.conf $(D4)/nginx.conf
 
-git: clean
-	@if [ -n "$(git_branch)" ]; then \
-		git add . ; \
-		git status ; \
-		git commit -m'$(m)' ; \
-		git push origin $(git_branch) ; \
+part4_1: part4_create_image part4_run
+
+part4_2: part4_stop part4_copy_status part4_run
+
+part5:
+	docker build -t $(N3):1.0 -f $(DOC2) .
+	docker images
+	dockle $(N3):1.0
+
+list_cont=$(shell docker ps -a -q)
+
+part6: part6_stop
+	@if [ -n "$(list_cont)" ]; then\
+		docker stop $(list_cont);\
+		docker rm $(list_cont);\
 	fi
+	docker-compose up -d --build
 
-rebuild: clean test
-
-install_gtest:
-	sudo apt install -y libgtest-dev
-	sudo apt install -y cmake
-	cd /usr/src/gtest
-	sudo cmake CMakeLists.txt
-	sudo make
-	sudo cp lib/*.a /usr/lib
-
-install_valgrind:
-	sudo apt install -y valgrind
+part6_stop:
+	docker-compose down
